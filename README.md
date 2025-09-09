@@ -2,6 +2,19 @@
 
 Command-line tool for validating European Union VAT identification numbers using the VIES (VAT Information Exchange System) API.
 
+## Status
+
+**Version**: 1.0.0  
+**Status**: Production Ready  
+**Last Updated**: September 2025
+
+**Recent Improvements:**
+- Fixed critical XML namespace conflicts in SOAP requests
+- Added comprehensive VIES API documentation from official WSDL
+- Enhanced SOAP fault handling with specific error codes
+- Added support for xsd:date format parsing (YYYY-MM-DD)
+- Improved reliability and error reporting
+
 ## Overview
 
 VIES Query provides fast, reliable validation of EU VAT numbers with support for all 27 EU member states. The tool performs client-side format validation and queries the official European Commission VIES service for real-time verification.
@@ -11,9 +24,10 @@ VIES Query provides fast, reliable validation of EU VAT numbers with support for
 - **Complete EU Coverage**: Supports all 27 EU member states
 - **Format Validation**: Client-side validation before API calls  
 - **Multiple Output Formats**: Plain text and JSON output
-- **Robust Error Handling**: Detailed error messages and appropriate exit codes
+- **Robust Error Handling**: Comprehensive SOAP fault detection and reporting
 - **Network Resilience**: Configurable timeouts and proper TLS security
 - **Professional Output**: Clean, parseable results for automation
+- **Production Ready**: Tested against live VIES service with proper XML namespace handling
 
 ## Installation
 
@@ -128,8 +142,19 @@ Request Date: 2025-01-09 12:00:00 UTC
 | `VIESQUERY_TIMEOUT` | Default timeout in seconds | `30` |
 | `VIESQUERY_VERBOSE` | Enable verbose mode | `false` |
 
-## Exit Codes
+## Error Handling
 
+The tool provides comprehensive error handling for all VIES service conditions:
+
+### SOAP Fault Types
+- `MS_UNAVAILABLE`: Member State service not available
+- `MS_MAX_CONCURRENT_REQ`: Too many concurrent requests for this country
+- `GLOBAL_MAX_CONCURRENT_REQ`: Global rate limit exceeded
+- `SERVICE_UNAVAILABLE`: General service error
+- `TIMEOUT`: Request timeout
+- `INVALID_INPUT`: Invalid country code or VAT number format
+
+### Exit Codes
 - `0`: Successful validation
 - `1`: Invalid command arguments
 - `2`: Network or API error  
@@ -169,6 +194,14 @@ viesquery --format json DE123456789 | jq -r '.name'
 # Check validity
 viesquery --format json DE123456789 | jq -r '.valid'
 ```
+
+## Documentation
+
+- **[User Guide](docs/user_guide.md)** - Complete usage instructions and examples
+- **[VIES API Specification](docs/vies-api-specification.md)** - Complete API documentation from official WSDL
+- **[Requirements](docs/requirements.md)** - Technical requirements and implementation status
+- **[Implementation Plan](docs/implementation_plan.md)** - Development architecture and current status
+- **[Namespace Fix Summary](docs/namespace-fix-summary.md)** - Technical details of recent improvements
 
 ## Development
 

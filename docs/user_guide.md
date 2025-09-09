@@ -4,6 +4,13 @@
 
 VIES Query is a command-line tool for validating European Union VAT identification numbers using the European Commission's VIES (VAT Information Exchange System) API. The tool provides fast, reliable VAT validation with support for all EU member states.
 
+**Latest Updates:**
+- Fixed XML namespace conflicts in SOAP requests
+- Added comprehensive VIES API documentation based on official WSDL
+- Improved error handling with proper SOAP fault detection
+- Added support for xsd:date format parsing
+- Enhanced reliability with proper namespace handling
+
 ## Installation
 
 ### Prerequisites
@@ -171,6 +178,21 @@ Error: Request timeout after 30 seconds
 VAT Number: DE123456789
 Try increasing timeout with --timeout flag
 ```
+
+#### SOAP Fault Errors
+The tool now properly handles VIES service-specific errors:
+
+```
+Error: SOAP fault: env:Server - MS_UNAVAILABLE
+```
+
+Common SOAP fault types:
+- `MS_UNAVAILABLE`: Member State service not available
+- `MS_MAX_CONCURRENT_REQ`: Too many concurrent requests for this country
+- `GLOBAL_MAX_CONCURRENT_REQ`: Global rate limit exceeded
+- `SERVICE_UNAVAILABLE`: General service error
+- `TIMEOUT`: Request timeout
+- `INVALID_INPUT`: Invalid country code or VAT number format
 
 #### Service Unavailable
 ```
@@ -352,6 +374,8 @@ viesquery DE123456789
 ### Getting Help
 - Check the [troubleshooting section](#troubleshooting) first
 - Review the [requirements document](requirements.md) for technical details
+- Check the [VIES API specification](vies-api-specification.md) for detailed API documentation
+- Review the [namespace fix summary](namespace-fix-summary.md) for recent technical improvements
 - Check [GitHub issues](https://github.com/l22-io/vies-query/issues) for known problems
 
 ### Reporting Issues
