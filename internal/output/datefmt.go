@@ -73,7 +73,10 @@ func verboseCalendarSentence(t time.Time) string {
 		isfx := ordinalSuffix(id)
 		return fmt.Sprintf("This request was made on %s, %s %d%s in year %d AH of the Islamic (Hijri) calendar.", weekday, iMonth, id, isfx, iy)
 	case "hebrew":
-		return fmt.Sprintf("This request was made on %s, %s %d%s of the year %d of the Hebrew calendar (tabular conversion planned).", weekday, gregMonth, day, sfx, y)
+		// Approximate (tabular) Hebrew year mapping: Hebrew year increments around Sep/Oct.
+		// We use a coarse threshold of Sep 20 for increment; this avoids early-year misclassification.
+		hy := hebrewYearApprox(y, int(t.Month()), day)
+		return fmt.Sprintf("This request was made on %s, %s %d%s in year %d AM of the Hebrew calendar (tabular approximation).", weekday, gregMonth, day, sfx, hy)
 	default:
 		return fmt.Sprintf("This request was made on %s, %s %d%s of the year %d of the common era.", weekday, gregMonth, day, sfx, y)
 	}
@@ -157,8 +160,8 @@ func jdnToJulian(jdn int) (year, month, day int) {
 func japaneseEra(y, m, d int) (string, int) {
 	// Define era boundaries (inclusive start dates)
 	type eraDef struct {
-		name      string
-		y, m, d   int
+		name    string
+		y, m, d int
 	}
 	eras := []eraDef{
 		{"Reiwa", 2019, 5, 1},
@@ -230,4 +233,20 @@ func islamicMonthName(m int) string {
 	default:
 		return ""
 	}
+}
+
+// hebrewYearApprox computes a tabular approximation of the Hebrew year for a given Gregorian date.
+// Hebrew year = Gregorian year + 3760, increments near Rosh Hashanah (Sep/Oct). We use Sep 20 as threshold.
+func hebrewYearApprox(gy, gm, gd int) int {
+	if gm > 9 {
+		return gy + 3761
+	}
+	if gm < 9 {
+		return gy + 3760
+	}
+	// gm == 9 (September)
+	if gd >= 20 {
+		return gy + 3761
+	}
+	return gy + 3760
 }
