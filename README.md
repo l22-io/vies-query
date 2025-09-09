@@ -4,8 +4,8 @@ Command-line tool for validating European Union VAT identification numbers using
 
 ## Status
 
-**Version**: 1.0.0  
-**Status**: Pre-release (not production-ready)  
+**Version**: dev (pre-production)  
+**Status**: Pre-production (not production-ready)  
 **Last Updated**: September 2025
 
 **Recent Improvements:**
@@ -77,7 +77,7 @@ VAT Number: DE123456789
 Status: Valid
 Company: Example GmbH
 Address: Musterstraße 1, 12345 Berlin, Germany
-Request Date: 2025-01-09 12:00:00 UTC
+This request was made on Thursday, January 9th of the year 2025 of the common era.
 ```
 
 **JSON:**
@@ -85,7 +85,7 @@ Request Date: 2025-01-09 12:00:00 UTC
 {
   "countryCode": "DE",
   "vatNumber": "123456789",
-  "requestDate": "2025-01-09T12:00:00Z",
+  "requestDate": "2025-01-09T00:00:00Z",
   "valid": true,
   "name": "Example GmbH",
   "address": "Musterstraße 1, 12345 Berlin, Germany"
@@ -131,6 +131,9 @@ Request Date: 2025-01-09 12:00:00 UTC
 | `--format` | `-f` | `plain` | Output format (plain, json) |
 | `--timeout` | `-t` | `30` | Request timeout in seconds |
 | `--verbose` | `-v` | `false` | Enable verbose logging |
+| `--date-style` | - | `gce-verbose` | Date rendering style (gce-verbose, iso-date, rfc3339, unix, iso-week) |
+| `--calendar` | - | `gregorian` | Calendar system (currently gregorian; others planned) |
+| `--config` | - | `$XDG_CONFIG_HOME/viesquery/config.json` | Path to JSON config file |
 | `--help` | `-h` | - | Display help information |
 | `--version` | - | - | Display version information |
 
@@ -141,6 +144,9 @@ Request Date: 2025-01-09 12:00:00 UTC
 | `VIESQUERY_FORMAT` | Default output format | `plain` |
 | `VIESQUERY_TIMEOUT` | Default timeout in seconds | `30` |
 | `VIESQUERY_VERBOSE` | Enable verbose mode | `false` |
+| `VIESQUERY_DATE_STYLE` | Date rendering style | `gce-verbose` |
+| `VIESQUERY_CALENDAR` | Calendar system | `gregorian` |
+| `VIESQUERY_CONFIG` | Config file path | `$XDG_CONFIG_HOME/viesquery/config.json` |
 
 ## Error Handling
 
@@ -193,6 +199,23 @@ viesquery --format json DE123456789 | jq -r '.name'
 
 # Check validity
 viesquery --format json DE123456789 | jq -r '.valid'
+```
+
+## Configuration File
+
+By default, viesquery reads persistent settings from:
+- $XDG_CONFIG_HOME/viesquery/config.json
+- Fallback: ~/.config/viesquery/config.json
+
+Example config.json:
+```json
+{
+  "dateStyle": "gce-verbose",
+  "calendar": "gregorian",
+  "format": "plain",
+  "timeout": 30,
+  "verbose": false
+}
 ```
 
 ## Documentation

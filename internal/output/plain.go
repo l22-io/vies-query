@@ -39,8 +39,8 @@ func (f *PlainFormatter) Format(result *vies.CheckVatResult) (string, error) {
 		}
 	}
 
-	// Request date
-	fmt.Fprintf(&b, "Request Date: %s\n", result.RequestDate.Format("2006-01-02 15:04:05 UTC"))
+	// Request date (rendered per configured style and calendar)
+	fmt.Fprintf(&b, "%s\n", FormatRequestDate(result.RequestDate))
 
 	return b.String(), nil
 }

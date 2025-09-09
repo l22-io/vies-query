@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -19,15 +21,18 @@ var (
 
 func main() {
 	var (
-		format    = flag.String("format", getEnvString("VIESQUERY_FORMAT", "plain"), "Output format (plain, json)")
-		timeout   = flag.Int("timeout", getEnvInt("VIESQUERY_TIMEOUT", 30), "Request timeout in seconds")
-		verbose   = flag.Bool("verbose", getEnvBool("VIESQUERY_VERBOSE", false), "Enable verbose logging")
-		version   = flag.Bool("version", false, "Display version information")
-		help      = flag.Bool("help", false, "Display help information")
+		format     = flag.String("format", getEnvString("VIESQUERY_FORMAT", "plain"), "Output format (plain, json)")
+		timeout    = flag.Int("timeout", getEnvInt("VIESQUERY_TIMEOUT", 30), "Request timeout in seconds")
+		verbose    = flag.Bool("verbose", getEnvBool("VIESQUERY_VERBOSE", false), "Enable verbose logging")
+		version    = flag.Bool("version", false, "Display version information")
+		help       = flag.Bool("help", false, "Display help information")
+		dateStyle  = flag.String("date-style", getEnvString("VIESQUERY_DATE_STYLE", ""), "Date rendering style (gce-verbose|iso-date|rfc3339|unix|iso-week)")
+		calendar   = flag.String("calendar", getEnvString("VIESQUERY_CALENDAR", ""), "Calendar system (gregorian; others planned)")
+		configPath = flag.String("config", getEnvString("VIESQUERY_CONFIG", ""), "Path to config file (JSON). Defaults to $XDG_CONFIG_HOME/viesquery/config.json or ~/.config/viesquery/config.json")
 	)
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "VIES Query - EU VAT Number Validation Tool\n\n")
+		fmt.Fprintf(os.Stderr, "VIES Query - EU VAT Number Validation Tool (pre-production)\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: %s [flags] VAT_NUMBER\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Validate EU VAT numbers using the VIES API\n\n")
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
@@ -41,10 +46,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s DE123456789\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --format json AT12345678\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --timeout 60 --verbose IT12345678901\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s --date-style gce-verbose --calendar gregorian DE336158855\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "\nEnvironment Variables:\n")
-		fmt.Fprintf(os.Stderr, "  VIESQUERY_FORMAT   Default output format (plain, json)\n")
-		fmt.Fprintf(os.Stderr, "  VIESQUERY_TIMEOUT  Default timeout in seconds\n")
-		fmt.Fprintf(os.Stderr, "  VIESQUERY_VERBOSE  Enable verbose mode (true, false)\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_FORMAT       Default output format (plain, json)\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_TIMEOUT      Default timeout in seconds\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_VERBOSE      Enable verbose mode (true, false)\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_DATE_STYLE   Date style (gce-verbose|iso-date|rfc3339|unix|iso-week)\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_CALENDAR     Calendar system (gregorian|julian|buddhist|minguo|japanese|islamic|hebrew)\n")
+		fmt.Fprintf(os.Stderr, "  VIESQUERY_CONFIG       Path to config file\n")
+		fmt.Fprintf(os.Stderr, "\nConfig File (JSON):\n")
+		fmt.Fprintf(os.Stderr, "  {\n    \"dateStyle\": \"gce-verbose\",\n    \"calendar\": \"gregorian\",\n    \"format\": \"plain\",\n    \"timeout\": 30,\n    \"verbose\": false\n  }\n")
+		fmt.Fprintf(os.Stderr, "\nDate styles available: gce-verbose (default), iso-date, rfc3339, unix, iso-week.\n")
+		fmt.Fprintf(os.Stderr, "Calendars available for gce-verbose: gregorian (default), julian, buddhist, minguo, japanese, islamic (tabular). Hebrew planned.\n")
 	}
 
 	flag.Parse()
@@ -65,6 +78,32 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	// Load config for persistent options (date style, calendar, etc.)
+	resolvedConfigPath := *configPath
+	if resolvedConfigPath == "" {
+		if dir, err := os.UserConfigDir(); err == nil {
+			resolvedConfigPath = filepath.Join(dir, "viesquery", "config.json")
+		}
+	}
+	cfg := loadConfig(resolvedConfigPath)
+
+	// Resolve date formatting options with precedence: defaults -> config -> env (already in flags defaults) -> flags
+	resolvedDateStyle := "gce-verbose"
+	if cfg.DateStyle != "" {
+		resolvedDateStyle = cfg.DateStyle
+	}
+	if *dateStyle != "" {
+		resolvedDateStyle = *dateStyle
+	}
+	resolvedCalendar := "gregorian"
+	if cfg.Calendar != "" {
+		resolvedCalendar = cfg.Calendar
+	}
+	if *calendar != "" {
+		resolvedCalendar = *calendar
+	}
+	output.SetDateOptions(resolvedDateStyle, resolvedCalendar)
 
 	vatNumber := flag.Arg(0)
 
@@ -96,6 +135,35 @@ func main() {
 
 	// Display result
 	displayResult(result, *format)
+}
+
+// loadConfig reads a JSON config file if present and returns the values; on error returns empty defaults
+func loadConfig(path string) struct {
+	Format    string `json:"format"`
+	Timeout   int    `json:"timeout"`
+	Verbose   bool   `json:"verbose"`
+	DateStyle string `json:"dateStyle"`
+	Calendar  string `json:"calendar"`
+} {
+	type cfgT struct {
+		Format    string `json:"format"`
+		Timeout   int    `json:"timeout"`
+		Verbose   bool   `json:"verbose"`
+		DateStyle string `json:"dateStyle"`
+		Calendar  string `json:"calendar"`
+	}
+	var cfg cfgT
+	if path == "" {
+		return cfg
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return cfg
+	}
+	defer f.Close()
+	dec := json.NewDecoder(f)
+	_ = dec.Decode(&cfg)
+	return cfg
 }
 
 func handleError(err error, format string) {

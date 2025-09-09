@@ -6,6 +6,22 @@ import (
 	"l22.io/viesquery/internal/vies"
 )
 
+// Global date formatting options (can be configured from main)
+var (
+	dateStyle = "gce-verbose" // default: Gregorian, Common Era, verbose sentence
+	calendar  = "gregorian"
+)
+
+// SetDateOptions configures date rendering behaviour for all formatters
+func SetDateOptions(style, cal string) {
+	if style != "" {
+		dateStyle = style
+	}
+	if cal != "" {
+		calendar = cal
+	}
+}
+
 // Formatter defines the interface for output formatting
 type Formatter interface {
 	Format(result *vies.CheckVatResult) (string, error)

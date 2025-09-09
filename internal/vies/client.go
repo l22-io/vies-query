@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultEndpoint  = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"
-	defaultUserAgent = "viesquery/1.0.0"
+	defaultUserAgent = "viesquery/dev"
 	soapNamespace    = "urn:ec.europa.eu:taxud:vies:services:checkVat:types"
 )
 
