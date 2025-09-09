@@ -5,7 +5,7 @@ Command-line tool for validating European Union VAT identification numbers using
 ## Status
 
 **Version**: 1.0.0  
-**Status**: Production Ready  
+**Status**: Pre-release (not production-ready)  
 **Last Updated**: September 2025
 
 **Recent Improvements:**
@@ -27,7 +27,7 @@ VIES Query provides fast, reliable validation of EU VAT numbers with support for
 - **Robust Error Handling**: Comprehensive SOAP fault detection and reporting
 - **Network Resilience**: Configurable timeouts and proper TLS security
 - **Professional Output**: Clean, parseable results for automation
-- **Production Ready**: Tested against live VIES service with proper XML namespace handling
+- **Active Development**: Not production-ready; interfaces and behavior may change
 
 ## Installation
 
