@@ -8,7 +8,6 @@ import (
 // CheckVatRequest represents the SOAP request for VAT validation
 type CheckVatRequest struct {
 	XMLName     xml.Name `xml:"urn:checkVat"`
-	Namespace   string   `xml:"xmlns:urn,attr"`
 	CountryCode string   `xml:"urn:countryCode"`
 	VatNumber   string   `xml:"urn:vatNumber"`
 }
@@ -36,23 +35,24 @@ type CheckVatResult struct {
 
 // SOAPEnvelope represents the SOAP envelope wrapper
 type SOAPEnvelope struct {
-	XMLName xml.Name `xml:"soap:Envelope"`
-	Xmlns   string   `xml:"xmlns:soap,attr"`
-	Body    SOAPBody `xml:"soap:Body"`
+	XMLName      xml.Name `xml:"soapenv:Envelope"`
+	XmlnsSoapenv string   `xml:"xmlns:soapenv,attr"`
+	XmlnsUrn     string   `xml:"xmlns:urn,attr"`
+	Body         SOAPBody `xml:"soapenv:Body"`
 }
 
 // SOAPBody represents the SOAP body
 type SOAPBody struct {
-	CheckVat         *CheckVatRequest  `xml:"checkVat,omitempty"`
+	CheckVat         *CheckVatRequest  `xml:"urn:checkVat,omitempty"`
 	CheckVatResponse *CheckVatResponse `xml:"checkVatResponse,omitempty"`
-	Fault            *SOAPFault        `xml:"soap:Fault,omitempty"`
+	Fault            *SOAPFault        `xml:"soapenv:Fault,omitempty"`
 }
 
 // SOAPFault represents a SOAP fault response
 type SOAPFault struct {
-	XMLName xml.Name   `xml:"soap:Fault"`
-	Code    string     `xml:"faultcode"`
-	String  string     `xml:"faultstring"`
+	XMLName xml.Name    `xml:"soapenv:Fault"`
+	Code    string      `xml:"faultcode"`
+	String  string      `xml:"faultstring"`
 	Detail  FaultDetail `xml:"detail"`
 }
 

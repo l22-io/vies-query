@@ -196,11 +196,24 @@ func (c *Client) sendSOAPRequest(ctx context.Context, requestBody []byte) (*Chec
 
 // parseSOAPResponse parses the SOAP response from VIES
 func (c *Client) parseSOAPResponse(responseBody []byte) (*CheckVatResult, error) {
+	// Use inline structs to avoid namespace conflicts
 	var envelope struct {
 		XMLName xml.Name `xml:"Envelope"`
 		Body    struct {
-			CheckVatResponse *CheckVatResponse `xml:"checkVatResponse"`
-			Fault            *SOAPFault        `xml:"Fault"`
+			CheckVatResponse *struct {
+				XMLName     xml.Name `xml:"checkVatResponse"`
+				CountryCode string   `xml:"countryCode"`
+				VatNumber   string   `xml:"vatNumber"`
+				RequestDate string   `xml:"requestDate"` // Parse as string first, then convert to time.Time
+				Valid       bool     `xml:"valid"`
+				Name        string   `xml:"name"`
+				Address     string   `xml:"address"`
+			} `xml:"checkVatResponse"`
+			Fault *struct {
+				XMLName xml.Name `xml:"Fault"`
+				Code    string   `xml:"faultcode"`
+				String  string   `xml:"faultstring"`
+			} `xml:"Fault"`
 		} `xml:"Body"`
 	}
 
@@ -230,11 +243,24 @@ func (c *Client) parseSOAPResponse(responseBody []byte) (*CheckVatResult, error)
 
 	resp := envelope.Body.CheckVatResponse
 
+	// Parse request date (xsd:date format: YYYY-MM-DD)
+	requestDate, err := time.Parse("2006-01-02", resp.RequestDate)
+	if err != nil {
+		// Try parsing with timezone suffix if present
+		requestDate, err = time.Parse("2006-01-02-07:00", resp.RequestDate)
+		if err != nil {
+			return nil, &ServiceError{
+				Code:    ErrServiceError,
+				Message: fmt.Sprintf("Failed to parse request date '%s': %v", resp.RequestDate, err),
+			}
+		}
+	}
+
 	// Create result
 	result := &CheckVatResult{
 		CountryCode: resp.CountryCode,
 		VatNumber:   resp.VatNumber,
-		RequestDate: resp.RequestDate,
+		RequestDate: requestDate,
 		Valid:       resp.Valid,
 		Name:        strings.TrimSpace(resp.Name),
 		Address:     strings.TrimSpace(resp.Address),
@@ -246,12 +272,10 @@ func (c *Client) parseSOAPResponse(responseBody []byte) (*CheckVatResult, error)
 // createSOAPRequest creates a SOAP envelope for VAT validation
 func createSOAPRequest(countryCode, vatNumber string) *SOAPEnvelope {
 	return &SOAPEnvelope{
-		XMLName: xml.Name{Local: "soap:Envelope"},
-		Xmlns:   "http://schemas.xmlsoap.org/soap/envelope/",
+		XmlnsSoapenv: "http://schemas.xmlsoap.org/soap/envelope/",
+		XmlnsUrn:     soapNamespace,
 		Body: SOAPBody{
 			CheckVat: &CheckVatRequest{
-				XMLName:     xml.Name{Space: soapNamespace, Local: "checkVat"},
-				Namespace:   soapNamespace,
 				CountryCode: countryCode,
 				VatNumber:   vatNumber,
 			},
