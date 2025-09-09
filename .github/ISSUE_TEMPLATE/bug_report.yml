@@ -1,0 +1,138 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of VIES Query are you running?
+      placeholder: "v1.0.0 (use `viesquery --version` to check)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      options:
+        - Linux (amd64)
+        - Linux (arm64)
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Windows
+        - Other (please specify in description)
+    validations:
+      required: true
+
+  - type: input
+    id: go-version
+    attributes:
+      label: Go Version (if building from source)
+      description: If you built from source, what Go version did you use?
+      placeholder: "go1.25.1"
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what you expected to happen...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Describe what actually happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide detailed steps to reproduce the issue
+      placeholder: |
+        1. Run command: `viesquery DE123456789`
+        2. Expected result: Valid VAT number
+        3. Actual result: Error message
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: command-used
+    attributes:
+      label: Command Used
+      description: What exact command did you run?
+      placeholder: "viesquery --verbose --format json DE123456789"
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error Output
+      description: If there was an error, please paste the full error output
+      render: shell
+      placeholder: Paste the complete error output here...
+
+  - type: textarea
+    id: verbose-output
+    attributes:
+      label: Verbose Output (if applicable)
+      description: If you ran with --verbose flag, please paste the output
+      render: shell
+      placeholder: Paste verbose output here (run with --verbose flag)...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: |
+        - Are you behind a proxy/firewall?
+        - Is this happening with specific VAT numbers?
+        - Does this happen consistently?
+        - Any other relevant information...
+
+  - type: checkboxes
+    id: environment
+    attributes:
+      label: Environment Information
+      description: Please check all that apply
+      options:
+        - label: I'm using the official binary release
+        - label: I built from source
+        - label: I'm using this in a CI/CD environment
+        - label: I'm behind a corporate firewall/proxy
+        - label: This is happening with multiple VAT numbers
+        - label: This is happening with only specific VAT numbers
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Before submitting, please confirm
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I have provided all required information
+          required: true
+        - label: I have tested with the latest version
+          required: true
